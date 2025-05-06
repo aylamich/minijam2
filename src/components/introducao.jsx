@@ -2,32 +2,61 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 export default function Introducao() {
-  const [speechIndex, setSpeechIndex] = useState(0);
-  const [isFadingIn, setIsFadingIn] = useState(false);
+  const [indiceFala, setIndiceFala] = useState(0);
+  const [estaAparecendo, setEstaAparecendo] = useState(false);
+  const [textoExibido, setTextoExibido] = useState("");
+  const [digitando, setDigitando] = useState(true); // Controla se está digitando
   const canvasRef = useRef(null);
 
   // Falas do gato
-  const speeches = [
+  const falas = [
     "Oi, eu sou o Gato! Eu e meus amigos vivíamos felizes na Terra até que algo inesperado aconteceu...",
     "Uma noite, aliens invadiram nosso lar com uma nave gigante! De repente, estávamos no espaço.",
     "No espaço, fomos separados e nos perdemos entre as estrelas. Estou sozinho agora.",
     "Mas não vou desistir! Vou viajar pelos planetas, encontrar meus amigos e salvar todos eles!"
   ];
 
-  const handleSpeechClick = () => {
-    console.log("Clicou no balão, speechIndex:", speechIndex + 1);
-    setSpeechIndex((prev) => prev + 1);
+  // Efeito de digitação
+  useEffect(() => {
+    setTextoExibido(""); // Reseta o texto
+    setDigitando(true); // Inicia a digitação
+    const textoAtual = falas[indiceFala] || ""; // Garante que não haja undefined
+    let index = 0;
+
+    const intervalo = setInterval(() => {
+      if (index < textoAtual.length) {
+        setTextoExibido(textoAtual.slice(0, index + 1)); // Constrói o texto letra por letra
+        index++;
+      } else {
+        setDigitando(false); // Termina a digitação
+        clearInterval(intervalo);
+      }
+    }, 50); // Velocidade da digitação (50ms por letra)
+
+    return () => clearInterval(intervalo); // Limpa o intervalo
+  }, [indiceFala]);
+
+  const handleFalaClick = () => {
+    if (digitando) {
+      // Se estiver digitando, completa o texto imediatamente
+      setTextoExibido(falas[indiceFala]);
+      setDigitando(false);
+    } else {
+      // Se a digitação terminou, avança para a próxima fala
+      console.log("Clicou no balão, indiceFala:", indiceFala + 1);
+      setIndiceFala((prev) => prev + 1);
+    }
   };
 
-  // Efeito de fade-in ao carregar a página
+  // Efeito de aparecimento ao carregar a página
   useEffect(() => {
-    setIsFadingIn(true);
+    setEstaAparecendo(true);
   }, []);
 
   return (
     <div
       className={`relative w-screen h-screen bg-[#0a0a2a] overflow-hidden transition-opacity duration-500 ${
-        isFadingIn ? "opacity-100" : "opacity-0"
+        estaAparecendo ? "opacity-100" : "opacity-0"
       }`}
     >
       {/* Fundo estelar */}
@@ -42,13 +71,13 @@ export default function Introducao() {
               top: Math.random() * 100 + "%",
               left: Math.random() * 100 + "%",
               opacity: Math.random() * 0.5 + 0.2,
-              animation: `twinkle ${Math.random() * 3 + 2}s infinite`,
+              animation: `cintilar ${Math.random() * 3 + 2}s infinite`,
             }}
           />
         ))}
       </div>
 
-      {/* Gato Principal  */}
+      {/* Gato Principal */}
       <img
         src="/assets/gato.png"
         alt="Gato Orbital"
@@ -57,12 +86,12 @@ export default function Introducao() {
       />
 
       {/* Balão de Fala e Botão Iniciar */}
-      {speechIndex < speeches.length ? (
+      {indiceFala < falas.length ? (
         <div
           className="absolute bottom-8 right-8 w-[50%] md:w-[45%] bg-white bg-opacity-80 text-black text-xl md:text-2xl font-bold p-6 rounded-lg cursor-pointer z-20"
-          onClick={handleSpeechClick}
+          onClick={handleFalaClick}
         >
-          {speeches[speechIndex]}
+          {textoExibido}
           {/* Cauda do balão (apontando para a esquerda, em direção ao gato) */}
           <div className="absolute top-1/2 -left-8 transform -translate-y-1/2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-white border-opacity-80" />
         </div>
@@ -76,13 +105,13 @@ export default function Introducao() {
       )}
 
       {/* Animação da nave abduzindo gatos */}
-      {speechIndex === 1 && (
+      {indiceFala === 1 && (
         <div className="absolute top-4 right-1/4 z-25">
           <img
             src="/assets/nave.png"
             alt="Nave Alien"
             className="w-32 h-32 object-contain"
-            style={{ animation: `nave-enter 1s ease-in-out` }}
+            style={{ animation: `entrada-nave 1s ease-in-out` }}
             onError={() => console.error("Erro ao carregar nave.png")}
           />
           <div
@@ -114,7 +143,7 @@ export default function Introducao() {
               style={{
                 top: `${60 + (i % 2) * 40}px`,
                 left: `${i % 2 === 0 ? -40 : 140}px`,
-                animation: `alien-fly 1.5s ease-in-out ${i * 0.2}s infinite alternate`
+                animation: `voo-alien 1.5s ease-in-out ${i * 0.2}s infinite alternate`
               }}
               onError={() => console.error("Erro ao carregar alien.png")}
             />
@@ -124,11 +153,11 @@ export default function Introducao() {
 
       {/* Estilos globais para animações */}
       <style jsx global>{`
-        @keyframes twinkle {
+        @keyframes cintilar {
           0%, 100% { opacity: 0.2; }
           50% { opacity: 0.8; }
         }
-        @keyframes nave-enter {
+        @keyframes entrada-nave {
           0% { transform: translateY(-100px); opacity: 0; }
           100% { transform: translateY(0); opacity: 1; }
         }
@@ -141,7 +170,7 @@ export default function Introducao() {
           80% { transform: translateY(-80px); opacity: 1; }
           100% { transform: translateY(-100px); opacity: 0; }
         }
-        @keyframes alien-fly {
+        @keyframes voo-alien {
           0% { transform: translateY(-20px); }
           100% { transform: translateY(20px); }
         }

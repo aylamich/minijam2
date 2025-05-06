@@ -1,49 +1,48 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-
-export default function Game() {
+export default function Fase3() {
   const canvasRef = useRef(null);
-  const [launched, setLaunched] = useState(false);
-  const [gameOver, setGameOver] = useState(false);
-  const [score, setScore] = useState(0);
-  const [phaseComplete, setPhaseComplete] = useState(false);
+  const [lancado, setLancado] = useState(false);
+  const [jogoTerminado, setJogoTerminado] = useState(false);
+  const [pontuacao, setPontuacao] = useState(0);
+  const [faseConcluida, setFaseConcluida] = useState(false);
 
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
+  const larguraTela = window.innerWidth;
+  const alturaTela = window.innerHeight;
 
-  const initialPlanetRadius = 50;
-  const initialDroneRadius = 12; // Reduzido de 16 para 12
+  const raioInicialPlaneta = 50;
+  const raioInicialDrone = 12;
 
-  const [planets, setPlanets] = useState([
-    { x: screenWidth / 2, y: screenHeight / 2, radius: initialPlanetRadius, mass: 50, color: "#2e8b57", angle: 0, type: "alien1" }, // Cor alterada para verde mais escuro
-    { x: screenWidth / 2 + 200, y: screenHeight / 2 - 100, radius: initialPlanetRadius + 5, mass: 70, color: "#66ff66", angle: 0, type: "alien2" },
+  const [planetas, setPlanetas] = useState([
+    { x: larguraTela / 2, y: alturaTela / 2, radius: raioInicialPlaneta, mass: 50, color: "#2e8b57", angle: 0, type: "alien1" },
+    { x: larguraTela / 2 + 200, y: alturaTela / 2 - 100, radius: raioInicialPlaneta + 5, mass: 70, color: "#66ff66", angle: 0, type: "alien2" },
   ]);
-  const [currentPlanetIndex, setCurrentPlanetIndex] = useState(0);
+  const [indicePlanetaAtual, setIndicePlanetaAtual] = useState(0);
 
   const drone = useRef({
-    x: planets[0].x,
-    y: planets[0].y - planets[0].radius - 20,
+    x: planetas[0].x,
+    y: planetas[0].y - planetas[0].radius - 20,
     vx: 0,
     vy: 0,
-    radius: initialDroneRadius,
+    radius: raioInicialDrone,
     color: "white",
   });
 
-  const [droneImage, setDroneImage] = useState(null);
-  const [finalPlanetImage, setFinalPlanetImage] = useState(null);
+  const [imagemDrone, setImagemDrone] = useState(null);
+  const [imagemPlanetaFinal, setImagemPlanetaFinal] = useState(null);
 
   const G = 0.8;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    let animationFrameId;
+    let idAnimacao;
 
     const droneImg = new Image();
     droneImg.src = "/assets/gato1.jpg";
     droneImg.onload = () => {
-      setDroneImage(droneImg);
+      setImagemDrone(droneImg);
     };
     droneImg.onerror = () => {
       console.error("Erro ao carregar a imagem gato1.jpg. Verifique o caminho /assets/gato1.jpg");
@@ -53,17 +52,16 @@ export default function Game() {
     finalImg.src = "/assets/gato3.jpg";
     finalImg.onload = () => {
       console.log("Imagem gato3.jpg carregada com sucesso");
-      setFinalPlanetImage(finalImg);
+      setImagemPlanetaFinal(finalImg);
     };
     finalImg.onerror = () => {
       console.error("Erro ao carregar a imagem gato3.jpg. Verifique o caminho /assets/gato3.jpg");
     };
 
-    function drawStars() {
-      ctx.fillStyle = "#33cc33"; // Fundo verde
+    function desenharEstrelas() {
+      ctx.fillStyle = "#33cc33";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Desenhar estrelas para efeito de galáxia
       for (let i = 0; i < 100; i++) {
         ctx.beginPath();
         const x = Math.random() * canvas.width;
@@ -75,20 +73,20 @@ export default function Game() {
       }
     }
 
-    function drawPlanet(planet, index) {
+    function desenharPlaneta(planeta, indice) {
       ctx.beginPath();
-      ctx.arc(planet.x, planet.y, planet.radius, 0, 2 * Math.PI);
-      ctx.fillStyle = planet.color;
+      ctx.arc(planeta.x, planeta.y, planeta.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = planeta.color;
       ctx.fill();
 
-      if (score === 19 && index === (currentPlanetIndex + 1) % planets.length) {
-        const offset = planet.radius + 10;
-        const x = planet.x + offset * Math.cos(planet.angle + 0.5);
-        const y = planet.y + offset * Math.sin(planet.angle + 0.5);
+      if (pontuacao === 19 && indice === (indicePlanetaAtual + 1) % planetas.length) {
+        const offset = planeta.radius + 10;
+        const x = planeta.x + offset * Math.cos(planeta.angle + 0.5);
+        const y = planeta.y + offset * Math.sin(planeta.angle + 0.5);
 
-        if (finalPlanetImage) {
+        if (imagemPlanetaFinal) {
           ctx.drawImage(
-            finalPlanetImage,
+            imagemPlanetaFinal,
             x - 10,
             y - 10,
             40,
@@ -103,14 +101,14 @@ export default function Game() {
       }
     }
 
-    function drawDrone() {
-      if (droneImage) {
+    function desenharDrone() {
+      if (imagemDrone) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(drone.current.x, drone.current.y, drone.current.radius, 0, 2 * Math.PI);
         ctx.clip();
         ctx.drawImage(
-          droneImage,
+          imagemDrone,
           drone.current.x - drone.current.radius,
           drone.current.y - drone.current.radius,
           drone.current.radius * 2,
@@ -120,68 +118,68 @@ export default function Game() {
       }
     }
 
-    function update() {
-      drawStars();
+    function atualizar() {
+      desenharEstrelas();
 
-      const updatedPlanets = [...planets];
-      updatedPlanets[currentPlanetIndex].angle += 0.03; // Aumentado de 0.02 para 0.03 para drone girar mais rápido
-      setPlanets(updatedPlanets);
+      const planetasAtualizados = [...planetas];
+      planetasAtualizados[indicePlanetaAtual].angle += 0.03;
+      setPlanetas(planetasAtualizados);
 
-      planets.forEach((planet, index) => drawPlanet(planet, index));
+      planetas.forEach((planeta, indice) => desenharPlaneta(planeta, indice));
 
-      if (launched) {
+      if (lancado) {
         drone.current.x += drone.current.vx;
         drone.current.y += drone.current.vy;
 
-        const nextPlanet = planets[(currentPlanetIndex + 1) % planets.length];
-        const dx = drone.current.x - nextPlanet.x;
-        const dy = drone.current.y - nextPlanet.y;
+        const proximoPlaneta = planetas[(indicePlanetaAtual + 1) % planetas.length];
+        const dx = drone.current.x - proximoPlaneta.x;
+        const dy = drone.current.y - proximoPlaneta.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < nextPlanet.radius + drone.current.radius) {
-          const newX = nextPlanet.x;
-          const newY = nextPlanet.y - nextPlanet.radius - 20;
+        if (dist < proximoPlaneta.radius + drone.current.radius) {
+          const novoX = proximoPlaneta.x;
+          const novoY = proximoPlaneta.y - proximoPlaneta.radius - 20;
 
-          let newPlanet;
-          let attempts = 0;
+          let novoPlaneta;
+          let tentativas = 0;
           do {
-            newPlanet = {
-              x: Math.random() * screenWidth * 0.5 + screenWidth / 4,
-              y: Math.random() * screenHeight * 0.4 + screenHeight / 4,
-              radius: Math.random() * 20 + 30, // Raios menores (30 a 50)
+            novoPlaneta = {
+              x: Math.random() * larguraTela * 0.5 + larguraTela / 4,
+              y: Math.random() * alturaTela * 0.4 + alturaTela / 4,
+              radius: Math.random() * 20 + 30,
               mass: Math.random() * 100 + 50,
-              color: `hsl(${Math.random() * 30 + 120}, 70%, 50%)`, // Tons de verde
+              color: `hsl(${Math.random() * 30 + 120}, 70%, 50%)`,
               angle: 0,
               type: Math.random() < 0.5 ? "alien1" : "alien2",
             };
-            const dx = newPlanet.x - nextPlanet.x;
-            const dy = newPlanet.y - nextPlanet.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance > 300 && distance < 500) break;
-            attempts++;
-          } while (attempts < 20);
+            const dx = novoPlaneta.x - proximoPlaneta.x;
+            const dy = novoPlaneta.y - proximoPlaneta.y;
+            const distancia = Math.sqrt(dx * dx + dy * dy);
+            if (distancia > 300 && distancia < 500) break;
+            tentativas++;
+          } while (tentativas < 20);
 
-          const newPlanets = [nextPlanet, newPlanet];
-          setPlanets(newPlanets);
-          setCurrentPlanetIndex(0);
-          setLaunched(false);
+          const novosPlanetas = [proximoPlaneta, novoPlaneta];
+          setPlanetas(novosPlanetas);
+          setIndicePlanetaAtual(0);
+          setLancado(false);
 
           drone.current = {
-            x: newX,
-            y: newY,
+            x: novoX,
+            y: novoY,
             vx: 0,
             vy: 0,
-            radius: initialDroneRadius,
+            radius: raioInicialDrone,
             color: "white",
           };
 
-          setScore(prev => {
-            const updated = prev + 1;
-            if (updated >= 20) {
-              setPhaseComplete(true);
-              setLaunched(false);
+          setPontuacao(prev => {
+            const atualizado = prev + 1;
+            if (atualizado >= 20) {
+              setFaseConcluida(true);
+              setLancado(false);
             }
-            return updated;
+            return atualizado;
           });
         }
       }
@@ -192,70 +190,70 @@ export default function Game() {
         drone.current.y < 0 ||
         drone.current.y > canvas.height
       ) {
-        setGameOver(true);
-        setLaunched(false);
+        setJogoTerminado(true);
+        setLancado(false);
       }
 
-      if (!launched) {
-        const planet = planets[currentPlanetIndex];
-        const offset = planet.radius + 20;
-        drone.current.x = planet.x + offset * Math.cos(planet.angle);
-        drone.current.y = planet.y + offset * Math.sin(planet.angle);
+      if (!lancado) {
+        const planeta = planetas[indicePlanetaAtual];
+        const offset = planeta.radius + 20;
+        drone.current.x = planeta.x + offset * Math.cos(planeta.angle);
+        drone.current.y = planeta.y + offset * Math.sin(planeta.angle);
       }
 
-      drawDrone();
-      animationFrameId = requestAnimationFrame(update);
+      desenharDrone();
+      idAnimacao = requestAnimationFrame(atualizar);
     }
 
-    animationFrameId = requestAnimationFrame(update);
-    canvas.addEventListener("click", launchDrone);
+    idAnimacao = requestAnimationFrame(atualizar);
+    canvas.addEventListener("click", lancarDrone);
 
     return () => {
-      canvas.removeEventListener("click", launchDrone);
-      cancelAnimationFrame(animationFrameId);
+      canvas.removeEventListener("click", lancarDrone);
+      cancelAnimationFrame(idAnimacao);
     };
-  }, [launched, planets, droneImage, finalPlanetImage]);
+  }, [lancado, planetas, imagemDrone, imagemPlanetaFinal]);
 
-  function launchDrone() {
-    if (!launched && !phaseComplete) {
-      const planet = planets[currentPlanetIndex];
-      const speed = 6;
-      drone.current.vx = speed * Math.cos(planet.angle);
-      drone.current.vy = speed * Math.sin(planet.angle);
-      setLaunched(true);
+  function lancarDrone() {
+    if (!lancado && !faseConcluida) {
+      const planeta = planetas[indicePlanetaAtual];
+      const velocidade = 6;
+      drone.current.vx = velocidade * Math.cos(planeta.angle);
+      drone.current.vy = velocidade * Math.sin(planeta.angle);
+      setLancado(true);
     }
   }
 
-  function restartGame() {
-    setScore(0);
-    setGameOver(false);
-    setPhaseComplete(false);
-    const resetPlanets = [
-      { x: screenWidth / 2, y: screenHeight / 2, radius: initialPlanetRadius, mass: 50, color: "#2e8b57", angle: 0, type: "alien1" }, 
-      { x: screenWidth / 2 + 200, y: screenHeight / 2 - 100, radius: initialPlanetRadius + 5, mass: 70, color: "#66ff66", angle: 0, type: "alien2" },
+  function reiniciarJogo() {
+    setPontuacao(0);
+    setJogoTerminado(false);
+    setFaseConcluida(false);
+    const planetasReiniciados = [
+      { x: larguraTela / 2, y: alturaTela / 2, radius: raioInicialPlaneta, mass: 50, color: "#2e8b57", angle: 0, type: "alien1" },
+      { x: larguraTela / 2 + 200, y: alturaTela / 2 - 100, radius: raioInicialPlaneta + 5, mass: 70, color: "#66ff66", angle: 0, type: "alien2" },
     ];
-    setPlanets(resetPlanets);
-    setCurrentPlanetIndex(0);
-    setLaunched(false);
+    setPlanetas(planetasReiniciados);
+    setIndicePlanetaAtual(0);
+    setLancado(false);
     drone.current = {
-      x: resetPlanets[0].x,
-      y: resetPlanets[0].y - resetPlanets[0].radius - 20,
+      x: planetasReiniciados[0].x,
+      y: planetasReiniciados[0].y - planetasReiniciados[0].radius - 20,
       vx: 0,
       vy: 0,
-      radius: initialDroneRadius,
+      radius: raioInicialDrone,
       color: "white",
     };
   }
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      <canvas ref={canvasRef} width={screenWidth} height={screenHeight} className="block" />
+      <canvas ref={canvasRef} width={larguraTela} height={alturaTela} className="block" />
       <div className="absolute top-4 left-4 rounded-md px-2 py-1">
         <div className="text-white text-xl font-bold drop-shadow-md">
-          Pontuação: {score}
+          Pontuacao: {pontuacao}
         </div>
         <div className="text-gray-200 text-lg font-medium drop-shadow-md">
-          Pontuação para vencer: 20
+          Pontuacao para vencer: 20
         </div>
       </div>
       <Link
@@ -266,11 +264,11 @@ export default function Game() {
         Menu
       </Link>
 
-      {gameOver && (
+      {jogoTerminado && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center bg-black bg-opacity-80 rounded-lg p-6">
-          <div className="text-red-500 text-5xl font-extrabold mb-6">GAME OVER</div>
+          <div className="text-red-500 text-5xl font-extrabold mb-6">FIM DE JOGO</div>
           <button
-            onClick={restartGame}
+            onClick={reiniciarJogo}
             className="px-8 py-3 bg-green-500 text-white text-xl rounded-xl hover:bg-green-600"
           >
             Reiniciar
@@ -278,25 +276,25 @@ export default function Game() {
         </div>
       )}
 
-        {phaseComplete && (
+      {faseConcluida && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center bg-black bg-opacity-80 rounded-lg p-6">
-          {finalPlanetImage && (
+          {imagemPlanetaFinal && (
             <img
-              src={finalPlanetImage.src}
+              src={imagemPlanetaFinal.src}
               alt="Gato Amigo"
               className="mx-auto mb-4"
               style={{ width: "200px", height: "200px" }}
             />
           )}
           <div className="text-green-400 text-4xl font-bold mb-4 drop-shadow-md">
-            Fase concluída com sucesso!
+            Fase concluida com sucesso!
           </div>
           <div className="text-yellow-400 text-2xl font-bold mb-6 drop-shadow-md">
-            Você achou seu amigo!
+            Voce achou seu amigo!
           </div>
           <div className="flex justify-center gap-4">
             <button
-              onClick={restartGame}
+              onClick={reiniciarJogo}
               className="px-8 py-3 bg-red-400 text-white text-xl rounded-lg hover:bg-red-600 drop-shadow-md"
             >
               Jogar novamente
@@ -306,7 +304,7 @@ export default function Game() {
               onClick={() => setIsNavigating(true)}
               className="px-8 py-3 bg-green-400 text-white text-xl rounded-lg hover:bg-green-600 drop-shadow-md"
             >
-              Próxima Fase
+              Proxima Fase
             </Link>
           </div>
         </div>
