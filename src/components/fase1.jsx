@@ -32,7 +32,7 @@ export default function Fase1() {
   const [imagemDrone, setImagemDrone] = useState(null);
   const [imagemPlanetaFinal, setImagemPlanetaFinal] = useState(null);
 
-  const G = 0.8;
+  const trail = useRef([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -48,18 +48,12 @@ export default function Fase1() {
     const imagemFinal = new Image();
     imagemFinal.src = "/assets/gato2.jpg";
     imagemFinal.onload = () => {
-      console.log("Imagem gato2.jpg carregada com sucesso");
       setImagemPlanetaFinal(imagemFinal);
-    };
-    imagemFinal.onerror = () => {
-      console.error("Erro ao carregar a imagem gato2.jpg. Verifique o caminho /assets/gato2.jpg");
     };
 
     function desenharEstrelas() {
-      ctx.fillStyle = "#000022"; // Fundo escuro de espaco
+      ctx.fillStyle = "#000022";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Desenhar estrelas para efeito de espaco estrelado
       for (let i = 0; i < 150; i++) {
         ctx.beginPath();
         const x = Math.random() * canvas.width;
@@ -73,36 +67,44 @@ export default function Fase1() {
 
     function desenharPlaneta(planeta, indice) {
       const gradient = ctx.createRadialGradient(
-      planeta.x - planeta.radius * 0.3, planeta.y - planeta.radius * 0.3, planeta.radius * 0.1,
-      planeta.x, planeta.y, planeta.radius);
-
+        planeta.x - planeta.radius * 0.3, planeta.y - planeta.radius * 0.3, planeta.radius * 0.1,
+        planeta.x, planeta.y, planeta.radius
+      );
       gradient.addColorStop(0, "white");
       gradient.addColorStop(1, planeta.color);
-
       ctx.beginPath();
       ctx.arc(planeta.x, planeta.y, planeta.radius, 0, 2 * Math.PI);
       ctx.fillStyle = gradient;
       ctx.fill();
-
-
       if (pontuacao === 4 && indice === (indicePlanetaAtual + 1) % planetas.length) {
         const deslocamento = planeta.radius + 10;
         const x = planeta.x + deslocamento * Math.cos(planeta.angle + 0.5);
         const y = planeta.y + deslocamento * Math.sin(planeta.angle + 0.5);
-
         if (imagemPlanetaFinal) {
-          ctx.drawImage(
-            imagemPlanetaFinal,
-            x - 10,
-            y - 10,
-            40,
-            40
-          );
+          ctx.drawImage(imagemPlanetaFinal, x - 10, y - 10, 40, 40);
         } else {
           ctx.beginPath();
           ctx.arc(x, y, 5, 0, 2 * Math.PI);
           ctx.fillStyle = "yellow";
           ctx.fill();
+        }
+      }
+    }
+
+    function desenharTrail() {
+      for (let i = 0; i < trail.current.length; i++) {
+        const pos = trail.current[i];
+        const alpha = i / trail.current.length;
+        const hue = (i * 30) % 360;
+        if (imagemDrone) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(imagemDrone, pos.x - 8, pos.y - 8, 16, 16);
+          ctx.globalCompositeOperation = "source-atop";
+          ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+          ctx.fillRect(pos.x - 8, pos.y - 8, 16, 16);
+          ctx.globalCompositeOperation = "source-over";
+          ctx.restore();
         }
       }
     }
@@ -126,26 +128,22 @@ export default function Fase1() {
 
     function atualizar() {
       desenharEstrelas();
-
       const planetasAtualizados = [...planetas];
       planetasAtualizados[indicePlanetaAtual].angle += 0.01;
       setPlanetas(planetasAtualizados);
-
       planetas.forEach((planeta, indice) => desenharPlaneta(planeta, indice));
-
       if (lancado) {
         drone.current.x += drone.current.vx;
         drone.current.y += drone.current.vy;
-
+        trail.current.push({ x: drone.current.x, y: drone.current.y });
+        if (trail.current.length > 50) trail.current.shift();
         const proximoPlaneta = planetas[(indicePlanetaAtual + 1) % planetas.length];
         const dx = drone.current.x - proximoPlaneta.x;
         const dy = drone.current.y - proximoPlaneta.y;
         const distancia = Math.sqrt(dx * dx + dy * dy);
-
         if (distancia < proximoPlaneta.radius + drone.current.radius) {
           const novoX = proximoPlaneta.x;
           const novoY = proximoPlaneta.y - proximoPlaneta.radius - 20;
-
           let novoPlaneta;
           let tentativas = 0;
           do {
@@ -154,7 +152,7 @@ export default function Fase1() {
               y: Math.random() * alturaTela * 0.4 + alturaTela / 4,
               radius: Math.random() * 30 + 50,
               mass: Math.random() * 100 + 50,
-              color: `hsl(${Math.random() * 60 + 300}, 70%, 50%)`, // Tons de rosa e roxo
+              color: `hsl(${Math.random() * 60 + 300}, 70%, 50%)`,
               angle: 0,
               type: Math.random() < 0.5 ? "alien1" : "alien2",
             };
@@ -164,12 +162,10 @@ export default function Fase1() {
             if (distancia > 200 && distancia < 400) break;
             tentativas++;
           } while (tentativas < 20);
-
           const novosPlanetas = [proximoPlaneta, novoPlaneta];
           setPlanetas(novosPlanetas);
           setIndicePlanetaAtual(0);
           setLancado(false);
-
           drone.current = {
             x: novoX,
             y: novoY,
@@ -178,7 +174,7 @@ export default function Fase1() {
             radius: raioInicialDrone,
             color: "white",
           };
-
+          trail.current = [];
           setPontuacao(prev => {
             const atualizado = prev + 1;
             if (atualizado >= 5) {
@@ -189,7 +185,6 @@ export default function Fase1() {
           });
         }
       }
-
       if (
         drone.current.x < 0 ||
         drone.current.x > canvas.width ||
@@ -199,14 +194,14 @@ export default function Fase1() {
         setJogoTerminado(true);
         setLancado(false);
       }
-
       if (!lancado) {
         const planeta = planetas[indicePlanetaAtual];
         const deslocamento = planeta.radius + 20;
         drone.current.x = planeta.x + deslocamento * Math.cos(planeta.angle);
         drone.current.y = planeta.y + deslocamento * Math.sin(planeta.angle);
+        trail.current = [];
       }
-
+      desenharTrail();
       desenharDrone();
       idAnimacao = requestAnimationFrame(atualizar);
     }
@@ -249,70 +244,37 @@ export default function Fase1() {
       radius: raioInicialDrone,
       color: "white",
     };
+    trail.current = [];
   }
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
       <canvas ref={canvasRef} width={larguraTela} height={alturaTela} className="block" />
       <div className="absolute top-4 left-4 rounded-md px-2 py-1">
-        <div className="text-white text-xl font-bold drop-shadow-md">
-          Pontuacao: {pontuacao}
-        </div>
-        <div className="text-gray-200 text-lg font-medium drop-shadow-md">
-          Pontuacao para vencer: 5
-        </div>
+        <div className="text-white text-xl font-bold drop-shadow-md">Pontuacao: {pontuacao}</div>
+        <div className="text-gray-200 text-lg font-medium drop-shadow-md">Pontuacao para vencer: 5</div>
       </div>
-      <Link
-        to="/menu"
-        onClick={() => setNavegando(true)}
-        className="absolute bottom-4 left-4 px-4 py-1 text-white text-base font-medium rounded-lg drop-shadow-md hover:underline"
-      >
-        Menu
-      </Link>
+      <Link to="/menu" className="absolute bottom-4 left-4 px-4 py-1 text-white text-base font-medium rounded-lg drop-shadow-md hover:underline">Menu</Link>
       {jogoTerminado && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center bg-black bg-opacity-80 rounded-lg p-6">
           <div className="text-red-500 text-5xl font-extrabold mb-6">FIM DE JOGO</div>
-          <button
-            onClick={reiniciarJogo}
-            className="px-8 py-3 bg-green-500 text-white text-xl rounded-xl hover:bg-green-600"
-          >
-            Reiniciar
-          </button>
+          <button onClick={reiniciarJogo} className="px-8 py-3 bg-green-500 text-white text-xl rounded-xl hover:bg-green-600">Reiniciar</button>
         </div>
       )}
       {faseConcluida && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center bg-black bg-opacity-80 rounded-lg p-6">
           {imagemPlanetaFinal && (
-            <img
-              src={imagemPlanetaFinal.src}
-              alt="Gato Amigo"
-              className="mx-auto mb-4"
-              style={{ width: "200px", height: "200px" }}
-            />
+            <img src={imagemPlanetaFinal.src} alt="Gato Amigo" className="mx-auto mb-4" style={{ width: "200px", height: "200px" }} />
           )}
-          <div className="text-green-400 text-4xl font-bold mb-4 drop-shadow-md">
-            Fase concluida com sucesso!
-          </div>
-          <div className="text-yellow-400 text-2xl font-bold mb-6 drop-shadow-md">
-            Voce achou seu amigo!
-          </div>
+          <div className="text-green-400 text-4xl font-bold mb-4 drop-shadow-md">Fase concluida com sucesso!</div>
+          <div className="text-yellow-400 text-2xl font-bold mb-6 drop-shadow-md">Voce achou seu amigo!</div>
           <div className="flex justify-center gap-4">
-            <button
-              onClick={reiniciarJogo}
-              className="px-8 py-3 bg-red-400 text-white text-xl rounded-lg hover:bg-red-600 drop-shadow-md"
-            >
-              Jogar novamente
-            </button>
-            <Link
-              to="/fase2"
-              onClick={() => setNavegando(true)}
-              className="px-8 py-3 bg-green-400 text-white text-xl rounded-lg hover:bg-green-600 drop-shadow-md"
-            >
-              Proxima Fase
-            </Link>
+            <button onClick={reiniciarJogo} className="px-8 py-3 bg-red-400 text-white text-xl rounded-lg hover:bg-red-600 drop-shadow-md">Jogar novamente</button>
+            <Link to="/fase2" className="px-8 py-3 bg-green-400 text-white text-xl rounded-lg hover:bg-green-600 drop-shadow-md">Proxima Fase</Link>
           </div>
         </div>
       )}
     </div>
   );
 }
+

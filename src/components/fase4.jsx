@@ -82,6 +82,7 @@ export default function Jogo() {
   const [imagemDrone, setImagemDrone] = useState(null);
   const [imagemPlanetaFinal, setImagemPlanetaFinal] = useState(null);
   const [imagemInimigo, setImagemInimigo] = useState(null);
+  const trail = useRef([]);
 
   const G = 0.8;
 
@@ -121,14 +122,15 @@ export default function Jogo() {
 
     function desenharPlaneta(planeta, indice) {
       const gradient = ctx.createRadialGradient(
-      planeta.x - planeta.radius * 0.3, planeta.y - planeta.radius * 0.3, planeta.radius * 0.1,
-      planeta.x, planeta.y, planeta.radius);
+        planeta.x - planeta.raio * 0.3, planeta.y - planeta.raio * 0.3, planeta.raio * 0.1,
+        planeta.x, planeta.y, planeta.raio
+      );
 
       gradient.addColorStop(0, "white");
-      gradient.addColorStop(1, planeta.color);
+      gradient.addColorStop(1, planeta.cor);
 
       ctx.beginPath();
-      ctx.arc(planeta.x, planeta.y, planeta.radius, 0, 2 * Math.PI);
+      ctx.arc(planeta.x, planeta.y, planeta.raio, 0, 2 * Math.PI);
       ctx.fillStyle = gradient;
       ctx.fill();
 
@@ -143,6 +145,25 @@ export default function Jogo() {
           ctx.arc(x, y, 5, 0, 2 * Math.PI);
           ctx.fillStyle = "yellow";
           ctx.fill();
+        }
+      }
+    }
+	
+
+    function desenharTrail() {
+      for (let i = 0; i < trail.current.length; i++) {
+        const pos = trail.current[i];
+        const alpha = i / trail.current.length;
+        const hue = (i * 30) % 360;
+        if (imagemDrone) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(imagemDrone, pos.x - 8, pos.y - 8, 16, 16);
+          ctx.globalCompositeOperation = "source-atop";
+          ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+          ctx.fillRect(pos.x - 8, pos.y - 8, 16, 16);
+          ctx.globalCompositeOperation = "source-over";
+          ctx.restore();
         }
       }
     }
@@ -201,6 +222,8 @@ export default function Jogo() {
       if (lancado) {
         drone.current.x += drone.current.vx;
         drone.current.y += drone.current.vy;
+        trail.current.push({ x: drone.current.x, y: drone.current.y });
+        if (trail.current.length > 50) trail.current.shift();
 
         const proximoPlaneta = planetas[(indicePlanetaAtual + 1) % planetas.length];
         const dx = drone.current.x - proximoPlaneta.x;
@@ -244,6 +267,7 @@ export default function Jogo() {
             cor: "white",
           };
 
+          trail.current = [];
           setPontuacao(prev => {
             const atualizado = prev + 1;
             if (atualizado >= 50) {
@@ -309,6 +333,7 @@ export default function Jogo() {
         drone.current.y = planeta.y + deslocamento * Math.sin(planeta.angulo);
       }
 
+      desenharTrail();
       desenharDrone();
       idQuadroAnimacao = requestAnimationFrame(atualizar);
     }

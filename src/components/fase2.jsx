@@ -31,6 +31,7 @@ export default function Fase2() {
 
   const [imagemDrone, setImagemDrone] = useState(null);
   const [imagemPlanetaFinal, setImagemPlanetaFinal] = useState(null);
+  const trail = useRef([]);
 
   const G = 0.8;
 
@@ -106,6 +107,24 @@ export default function Fase2() {
       }
     }
 
+    function desenharTrail() {
+      for (let i = 0; i < trail.current.length; i++) {
+        const pos = trail.current[i];
+        const alpha = i / trail.current.length;
+        const hue = (i * 30) % 360;
+        if (imagemDrone) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(imagemDrone, pos.x - 8, pos.y - 8, 16, 16);
+          ctx.globalCompositeOperation = "source-atop";
+          ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+          ctx.fillRect(pos.x - 8, pos.y - 8, 16, 16);
+          ctx.globalCompositeOperation = "source-over";
+          ctx.restore();
+        }
+      }
+    }
+
     function desenharDrone() {
       if (imagemDrone) {
         ctx.save();
@@ -135,6 +154,8 @@ export default function Fase2() {
       if (lancado) {
         drone.current.x += drone.current.vx;
         drone.current.y += drone.current.vy;
+        trail.current.push({ x: drone.current.x, y: drone.current.y });
+        if (trail.current.length > 50) trail.current.shift();
 
         const proximoPlaneta = planetas[(indicePlanetaAtual + 1) % planetas.length];
         const dx = drone.current.x - proximoPlaneta.x;
@@ -178,6 +199,7 @@ export default function Fase2() {
             color: "white",
           };
 
+          trail.current = [];
           setPontuacao(prev => {
             const atualizado = prev + 1;
             if (atualizado >= 10) {
@@ -206,6 +228,7 @@ export default function Fase2() {
         drone.current.y = planeta.y + deslocamento * Math.sin(planeta.angle);
       }
 
+      desenharTrail();
       desenharDrone();
       idAnimacao = requestAnimationFrame(atualizar);
     }
