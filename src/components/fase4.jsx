@@ -120,9 +120,16 @@ export default function Jogo() {
     }
 
     function desenharPlaneta(planeta, indice) {
+      const gradient = ctx.createRadialGradient(
+      planeta.x - planeta.radius * 0.3, planeta.y - planeta.radius * 0.3, planeta.radius * 0.1,
+      planeta.x, planeta.y, planeta.radius);
+
+      gradient.addColorStop(0, "white");
+      gradient.addColorStop(1, planeta.color);
+
       ctx.beginPath();
-      ctx.arc(planeta.x, planeta.y, planeta.raio, 0, 2 * Math.PI);
-      ctx.fillStyle = planeta.cor;
+      ctx.arc(planeta.x, planeta.y, planeta.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = gradient;
       ctx.fill();
 
       if (pontuacao === 49 && indice === (indicePlanetaAtual + 1) % planetas.length) {

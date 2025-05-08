@@ -12,6 +12,7 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Inicio />} />
         <Route path="/inicio" element={<Inicio />} />
         <Route path="/introducao" element={<Introdução />} />
         <Route path="/menu" element={<Menu />} />
@@ -23,5 +24,6 @@ function App() {
     </Router>
   );
 }
+
 
 export default App;
